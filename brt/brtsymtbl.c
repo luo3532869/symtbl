@@ -68,19 +68,22 @@ static symnode_t *_rotateright(symnode_t *t)
 static void _upflipcolor(symnode_t *t)
 {
 	t->color = RED;
-	t->left->color = BLACK;
-	t->right->color = BLACK;
+	if (t->left) t->left->color = BLACK;
+	if (t->right) t->right->color = BLACK;
 }
 
 static void _downflipcolor(symnode_t *t)
 {
 	t->color = BLACK;
-	t->left->color = RED;
-	t->right->color = RED;
+	if (t->left) t->left->color = RED;
+	if (t->right) t->right->color = RED;
 }
 
 static symnode_t *_balance(symnode_t *t)
 {
+	if (NULL == t)
+		return NULL;
+		
 	if (_isred(t->right))
 		t = _rotateleft(t);
 
@@ -246,6 +249,23 @@ static symnode_t * _newsymnode(kv_t *key, kv_t *value, int n)
 	return newnode;
 }
 
+static symnode_t *_copysymnode(symnode_t *t)
+{
+	symnode_t *n;
+
+	if (NULL == t)
+		return NULL;
+		
+	n = _newsymnode(copykvnode(t->key), copykvnode(t->value), t->nelems);
+
+	n->nelems = t->nelems;
+	n->color = t->color;
+	n->left = t->left;
+	n->right = t->right;
+	
+	return n;
+}
+
 static symnode_t *_put(symnode_t *t, kv_t *key, kv_t *value)
 {
 	int cmp;
@@ -359,9 +379,13 @@ static symnode_t *_moveredright(symnode_t *t)
 {
 	_downflipcolor(t);
 
-	if (!_isred(t->left->left))
-		t = _rotateright(t);
+	if (NULL != t->left)
+	{
+		if (!_isred(t->left))
+			t = _rotateright(t);
 
+	}
+	
 	return t;
 }
 
@@ -414,27 +438,41 @@ static symnode_t *_del(symnode_t *t, kv_t *key)
 
 	if (cmp < 0)
 	{
-		if (!_isred(t->left) && !_isred(t->left->left))
+		s = t->left ? t->left->left : NULL;
+		if (!_isred(t->left) && !_isred(s))
 			t = _moveredleft(t);
-		t = _del(t->left, key);
+		t->left = _del(t->left, key);
 	}
 	else
 	{
 		if (_isred(t->left))
-			t = _rotateleft(t);
+			t = _rotateright(t);
 
-		if (!_isred(t->right) && !_isred(t->right->left))
+		s = t->right ? t->right->left : NULL;
+		if (!_isred(t->right) && !_isred(s))
 			t = _moveredright(t);
 
 		if (0 == _OPS(key).cmp(key, t->key))
 		{
-			s = _min(t->right);
+			s = t;
+			t = _min(s->right);
+			t = _copysymnode(t);
+			
+			if (NULL != t)
+			{
+				t->color = s->color;
+				t->right = _delmin(s->right);
+				t->left = s->left;
+			}
+			_freesymnode(s);
+		}
+		else
+		{
+			t->right = _del(t->right, key);
 		}
 	}
 
-	t->nelems = _treesize(t->left) + _treesize(t->right) + 1;
-
-	return t;
+	return _balance(t);
 }
 
 /*delete one node from list*/

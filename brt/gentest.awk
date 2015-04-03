@@ -141,9 +141,9 @@ function addcheck(	k, i)
 
 		if (i < 3)
 		{
-		#	print "checkdel(st,"  gettype(k)   ","   getpvalue(k)   ");"  > tfile
-		#	delete rec[k]
-		#	print "checklength(st," arraylen(rec)  ");" > tfile
+			print "checkdel(st,"  gettype(k)   ","   getpvalue(k)   ");"  > tfile
+			delete rec[k]
+			print "checklength(st," arraylen(rec)  ");" > tfile
 		}	
 	}
 }

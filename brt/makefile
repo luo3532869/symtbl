@@ -2,8 +2,8 @@ CFLAGS = -ggdb -Wall
 CC = gcc
 LDFLAGS = -lm
 OBJS = main.o testframe.o brtsymtbl.o syscallpack.o kvnode.o
-KEYTYPE = 1
-TESTNUM = 5
+KEYTYPE = 2
+TESTNUM = 1000	
 STRATEGY = brt
 
 brt: $(OBJS)

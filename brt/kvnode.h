@@ -22,12 +22,14 @@ struct _kv;
 typedef void (*print_fn)(struct _kv *kv);
 typedef void (*free_fn)(struct _kv *kv);
 typedef int (*cmp_fn)(struct _kv *key1, struct _kv *key2);
+typedef int (*copy_fn)(struct _kv *k1, struct _kv *k2);
 
 typedef struct _kvops_t
 {
 	print_fn  print;
 	free_fn  free;
 	cmp_fn  cmp;
+	copy_fn copy;
 }kvops_t;
 
 typedef struct _kv
@@ -63,5 +65,6 @@ typedef struct _kv
 
 kv_t *newkvnode(type_kv t, va_list *arg);
 int freekvnode(kv_t *node);
+kv_t * copykvnode(kv_t *node);
 
 #endif

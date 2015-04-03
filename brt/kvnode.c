@@ -46,6 +46,7 @@ int int_cmp(kv_t *k1, kv_t *k2)
 	return _DI(k1) - _DI(k2);
 }
 
+
 void double_print(kv_t *kv)
 {
 	assert (TKVDOUBLE== kv->t);
@@ -67,6 +68,13 @@ int double_cmp(kv_t *k1, kv_t *k2)
 		return 0;
 }
 
+int general_copy(kv_t *k1, kv_t *k2)
+{
+	*k2 = *k1;
+	
+	return 0;
+}
+
 void string_print(kv_t *kv)
 {
 	assert (TKVSTRING== kv->t);
@@ -85,6 +93,16 @@ int string_cmp(kv_t *k1, kv_t *k2)
 	assert (TKVSTRING== k1->t);
 
 	return strcmp(_DS(k1), _DS(k2));
+}
+
+int string_copy(kv_t *k1, kv_t *k2)
+{
+	assert(TKVSTRING == k1->t);
+
+	*k2 = *k1;
+	k2->o.dstring = STRDUP(k2->o.dstring);
+
+	return strlen(k2->o.dstring);
 }
 
 void object_print(kv_t *kv)
@@ -132,14 +150,36 @@ int object_cmp(kv_t *k1, kv_t *k2)
 		return _DO(k1) - _DO(k2);
 }
 
+int object_copy(kv_t *k1, kv_t *k2)
+{
+	assert(TKVOBJECT == k1->t);
+	kvobj_t *o1;
+	kvobj_t *o2;
+	o1 = _DO(k1);
+	o2 = _DO(k2);
+
+	*k2 = *k1;
+	
+	if (NULL != o1->copy)
+	{
+		return o1->copy(o1, o2);
+	}
+	else		
+	{
+		k2->o.dobj = k1->o.dobj;
+	}
+
+	return 0;
+}
+
 struct t_ops allops[] = 
 {
-	{TKVNULL, {null_print, NULL, null_cmp}},
-	{TKVINT, {int_print, NULL, int_cmp}},
-	{TKVDOUBLE, {double_print, NULL, double_cmp}},
-	{TKVSTRING, {string_print, string_free, string_cmp}},
-	{TKVOBJECT, {object_print, object_free, object_cmp}},		/*default object operations,should register by user*/
-	{TKVEND, {NULL, NULL, NULL}}
+	{TKVNULL, {null_print, NULL, null_cmp, NULL}},
+	{TKVINT, {int_print, NULL, int_cmp, general_copy}},
+	{TKVDOUBLE, {double_print, NULL, double_cmp, general_copy}},
+	{TKVSTRING, {string_print, string_free, string_cmp, string_copy}},
+	{TKVOBJECT, {object_print, object_free, object_cmp, object_copy}},		/*default object operations,should register by user*/
+	{TKVEND, {NULL, NULL, NULL, NULL}}
 };
 
 
@@ -198,5 +238,17 @@ int freekvnode(kv_t *node)
 	FREE(node);
 
 	return 0;
+}
+
+kv_t * copykvnode(kv_t *node)
+{
+	kv_t *nw;
+	nw = (kv_t *)MALLOC(sizeof(kv_t));
+	
+	if (NULL != (_OPS(node)).copy)
+		(_OPS(node)).copy(node, nw);
+	else
+		*nw = *node;
+	return nw;
 }
 

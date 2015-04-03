@@ -15,6 +15,7 @@ typedef struct _kvobj_t
 	obj_print_fn  print;
 	obj_free_fn  free;
 	obj_cmp_fn  cmp;
+	obj_cmp_fn copy;
 }kvobj_t;
 
 
